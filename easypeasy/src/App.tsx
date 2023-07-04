@@ -18,8 +18,8 @@ function App() {
   const increment = useStoreActions((state: any) => state.counts.increment);
   const decrement = useStoreActions((state: any) => state.counts.decrement);
   const saveCount = useStoreActions((actions: any) => actions.counts.saveCount);
-  const initEditTitle = useStoreActions(
-    (state: any) => state.counts.initEditTitle
+  const setLocalStatus = useStoreActions(
+    (actions: any) => actions.counts.setLocalStatus
   );
 
   /**
@@ -38,7 +38,7 @@ function App() {
         increment={increment}
         decrement={decrement}
         saveCount={saveCount}
-        initEditTitle={initEditTitle}
+        setLocalStatus={setLocalStatus}
       />
     </div>
   );

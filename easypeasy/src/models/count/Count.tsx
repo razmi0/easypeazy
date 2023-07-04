@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CountType, Status } from "./model";
+import { CountType, Status, LocalStatus } from "./model";
 
 interface CountProps {
   counts: CountType[];
@@ -9,7 +9,7 @@ interface CountProps {
   increment: (count: CountType) => void;
   decrement: (count: CountType) => void;
   saveCount: (count: CountType) => void;
-  initEditTitle: (id: number) => void;
+  setLocalStatus: (data: { id: number; localStatus: LocalStatus }) => void;
 }
 
 function Count({
@@ -20,7 +20,7 @@ function Count({
   increment,
   decrement,
   saveCount,
-  initEditTitle,
+  setLocalStatus,
 }: CountProps) {
   console.log("Count component rendered");
 
@@ -35,7 +35,10 @@ function Count({
                 <div className="card">
                   <div className="card-header">
                     <button onClick={() => increment(count)}>++</button>
-                    <CountDisplay count={count} initEditTitle={initEditTitle} />
+                    <CountDisplay
+                      count={count}
+                      setLocalStatus={setLocalStatus}
+                    />
                     <button onClick={() => decrement(count)}>--</button> <br />
                   </div>
                   <button onClick={() => deleteCount(count)}>Delete</button>
@@ -51,10 +54,10 @@ function Count({
 
 interface CountDisplayProps {
   count: CountType;
-  initEditTitle: (id: number) => void;
+  setLocalStatus: (data: { id: number; localStatus: LocalStatus }) => void;
 }
 
-const CountDisplay = ({ count, initEditTitle }: CountDisplayProps) => {
+const CountDisplay = ({ count, setLocalStatus }: CountDisplayProps) => {
   const [title, setTitle] = useState(count.title);
   return (
     <div className="counter">
@@ -63,7 +66,7 @@ const CountDisplay = ({ count, initEditTitle }: CountDisplayProps) => {
           count={count}
           title={title}
           setTitle={setTitle}
-          initEditTitle={initEditTitle}
+          setLocalStatus={setLocalStatus}
         />{" "}
         ( {count.localStatus} )
       </span>
@@ -76,12 +79,12 @@ interface CountTitleProps {
   title: string;
   setTitle: (title: string) => void;
   count: CountType;
-  initEditTitle: (id: number) => void;
+  setLocalStatus: (data: { id: number; localStatus: LocalStatus }) => void;
 }
 
 const CountTitle = ({
   count,
-  initEditTitle,
+  setLocalStatus,
   title,
   setTitle,
 }: CountTitleProps) => {
@@ -93,7 +96,10 @@ const CountTitle = ({
   return (
     <>
       {count.localStatus !== "edit" && (
-        <span className="counter-title" onClick={() => initEditTitle(count.id)}>
+        <span
+          className="counter-title"
+          onClick={() => setLocalStatus({ id: count.id, localStatus: "edit" })}
+        >
           {title}
         </span>
       )}

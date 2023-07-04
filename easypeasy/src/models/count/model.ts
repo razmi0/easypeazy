@@ -26,7 +26,6 @@ export interface CountModel {
   deleteCount: Thunk<CountModel, { id: number }>;
   saveCount: Thunk<CountModel, CountType>;
   setLocalStatus: Action<CountModel, { id: number; localStatus: LocalStatus }>;
-  initEditTitle: Action<CountModel, number>;
   updateCount: Action<CountModel, CountType>;
 }
 export type Method = "POST" | "GET" | "DELETE" | "PUT" | "PATCH" | "HEAD";
@@ -100,10 +99,7 @@ const countModel: CountModel = {
   updateCount: action((state, { id, title, count, localStatus }) => {
     state.counts = state.counts.map((item) => {
       if (item.id === id) {
-        console.log("updateCount", item);
-
         item = { id, title, count, localStatus };
-        console.log("item", item);
       }
       return item;
     });
@@ -142,6 +138,7 @@ const countModel: CountModel = {
     async (actions, { id, title, count, localStatus }: CountType) => {
       try {
         actions.setLocalStatus({ id, localStatus: "updating" });
+        localStatus = "updated";
         await fetch(`${url}/${id}`, {
           method: "PATCH",
           body: JSON.stringify({ title, count, localStatus }),
@@ -149,24 +146,14 @@ const countModel: CountModel = {
             "Content-type": "application/json; charset=UTF-8",
           },
         });
-        actions.updateCount({ id, title, count, localStatus });
         actions.setLocalStatus({ id, localStatus: "updated" });
+        actions.updateCount({ id, title, count, localStatus });
       } catch (error) {
         actions.setLocalStatus({ id, localStatus: "failed" });
         console.log(error);
       }
     }
   ),
-
-  initEditTitle: action((state, id) => {
-    state.counts = state.counts.map((item) => {
-      if (item.id === id) {
-        item.localStatus = "edit";
-      }
-
-      return item;
-    });
-  }),
 };
 
 export default countModel;
