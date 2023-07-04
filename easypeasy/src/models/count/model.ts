@@ -12,7 +12,7 @@ export type CountType = {
 };
 
 export type Status = "idle" | "loading" | "succeeded" | "failed";
-export type LocalStatus = Status | "updated" | "updating";
+export type LocalStatus = Status | "updated" | "updating" | "edit";
 
 export interface CountModel {
   counts: CountType[];
@@ -26,6 +26,8 @@ export interface CountModel {
   deleteCount: Thunk<CountModel, { id: number }>;
   saveCount: Thunk<CountModel, CountType>;
   setLocalStatus: Action<CountModel, { id: number; localStatus: LocalStatus }>;
+  initEditTitle: Action<CountModel, number>;
+  updateCount: Action<CountModel, CountType>;
 }
 export type Method = "POST" | "GET" | "DELETE" | "PUT" | "PATCH" | "HEAD";
 
@@ -95,6 +97,18 @@ const countModel: CountModel = {
     state.counts = state.counts.filter((item) => item.id !== id);
   }),
 
+  updateCount: action((state, { id, title, count, localStatus }) => {
+    state.counts = state.counts.map((item) => {
+      if (item.id === id) {
+        console.log("updateCount", item);
+
+        item = { id, title, count, localStatus };
+        console.log("item", item);
+      }
+      return item;
+    });
+  }),
+
   fetchCounts: thunk(async (actions) => {
     try {
       actions.setStatus("loading");
@@ -130,11 +144,12 @@ const countModel: CountModel = {
         actions.setLocalStatus({ id, localStatus: "updating" });
         await fetch(`${url}/${id}`, {
           method: "PATCH",
-          body: JSON.stringify({ id, title, count, localStatus }),
+          body: JSON.stringify({ title, count, localStatus }),
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
         });
+        actions.updateCount({ id, title, count, localStatus });
         actions.setLocalStatus({ id, localStatus: "updated" });
       } catch (error) {
         actions.setLocalStatus({ id, localStatus: "failed" });
@@ -142,6 +157,16 @@ const countModel: CountModel = {
       }
     }
   ),
+
+  initEditTitle: action((state, id) => {
+    state.counts = state.counts.map((item) => {
+      if (item.id === id) {
+        item.localStatus = "edit";
+      }
+
+      return item;
+    });
+  }),
 };
 
 export default countModel;
