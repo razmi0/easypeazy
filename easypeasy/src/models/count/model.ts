@@ -1,25 +1,52 @@
 import { action, Action, Thunk, thunk } from "easy-peasy";
 
+/**
+ * TYPES
+ */
+
 export type CountType = {
   id: number;
   count: number;
   title: string;
+  localStatus: LocalStatus;
 };
 
 export type Status = "idle" | "loading" | "succeeded" | "failed";
+export type LocalStatus = Status | "updated" | "updating";
 
 export interface CountModel {
   counts: CountType[];
   status: "idle" | "loading" | "succeeded" | "failed";
   setStatus: Action<CountModel, "idle" | "loading" | "succeeded" | "failed">;
+  increment: Action<CountModel, { id: number }>;
+  decrement: Action<CountModel, { id: number }>;
   addCounts: Action<CountModel, CountType[]>;
   removeCount: Action<CountModel, number>;
   fetchCounts: Thunk<CountModel, CountType[]>;
   deleteCount: Thunk<CountModel, { id: number }>;
+  saveCount: Thunk<CountModel, CountType>;
+  setLocalStatus: Action<CountModel, { id: number; localStatus: LocalStatus }>;
 }
+export type Method = "POST" | "GET" | "DELETE" | "PUT" | "PATCH" | "HEAD";
+
+export interface FetchOptions {
+  method: Method;
+  body: string;
+  headers: {
+    "Content-type": string;
+  };
+}
+
+/**
+ * Variables
+ */
 
 const url =
   "https://my-json-server.typicode.com/razmi0/json_placeholder/counts";
+
+/**
+ * MODEL
+ */
 
 const countModel: CountModel = {
   counts: [] as CountType[],
@@ -29,8 +56,35 @@ const countModel: CountModel = {
    */
   status: "idle" as Status,
 
+  increment: action((state, { id }) => {
+    state.counts = state.counts.map((item) => {
+      if (item.id === id) {
+        item.count += 1;
+      }
+      return item;
+    });
+  }),
+
+  decrement: action((state, { id }) => {
+    state.counts = state.counts.map((item) => {
+      if (item.id === id) {
+        item.count -= 1;
+      }
+      return item;
+    });
+  }),
+
   setStatus: action((state, payload) => {
     state.status = payload;
+  }),
+
+  setLocalStatus: action((state, { id, localStatus }) => {
+    state.counts = state.counts.map((item) => {
+      if (item.id === id) {
+        item.localStatus = localStatus;
+      }
+      return item;
+    });
   }),
 
   addCounts: action((state, payload) => {
@@ -69,6 +123,25 @@ const countModel: CountModel = {
       console.log(error);
     }
   }),
+
+  saveCount: thunk(
+    async (actions, { id, title, count, localStatus }: CountType) => {
+      try {
+        actions.setLocalStatus({ id, localStatus: "updating" });
+        await fetch(`${url}/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ id, title, count, localStatus }),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        });
+        actions.setLocalStatus({ id, localStatus: "updated" });
+      } catch (error) {
+        actions.setLocalStatus({ id, localStatus: "failed" });
+        console.log(error);
+      }
+    }
+  ),
 };
 
 export default countModel;
